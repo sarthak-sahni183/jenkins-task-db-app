@@ -3,68 +3,66 @@ pipeline {
 
     stages {
 
-        
         stage('Checkout Code') {
             steps {
-                echo '📥 Checking out Code from Github'
+                echo '📥 Fetching code from GitHub...'
                 checkout scm
             }
         }
 
         stage('Build Docker Images') {
             steps {
-                echo '🐳 Building Docker images using Docker Compose...'
+                echo '🐳 Building Docker images...'
                 bat 'docker compose build'
             }
         }
 
         stage('Stop Old Containers') {
             steps {
-                echo '🛑 Stopping any running containers...'
+                echo '🛑 Stopping old containers...'
                 bat 'docker compose down'
             }
         }
 
-        stage('Run Containers') {
+        stage('Deploy Containers') {
             steps {
-                echo '🚀 Starting application containers...'
+                echo '🚀 Starting containers...'
                 bat 'docker compose up -d'
             }
         }
 
         stage('Verify Running Containers') {
             steps {
-                echo '🔍 Checking running containers...'
+                echo '🔍 Checking containers...'
                 bat 'docker ps'
             }
         }
 
         stage('App Health Check') {
             steps {
-                echo '🌐 Verifying frontend accessibility...'
-                
-                // Wait for containers to stabilize
-                bat 'timeout /t 10'
+                echo '🌐 Verifying app accessibility...'
 
-                // Try opening frontend URL
-                bat 'curl http://localhost:3000 || echo Frontend reachable'
+                // Wait for app startup
+                bat 'ping 127.0.0.1 -n 10 > nul'
+
+                // Hit frontend
+                bat 'curl http://localhost:3000'
             }
         }
     }
 
     post {
 
-        always {
-            echo '📦 Pipeline execution completed.'
-        }
-
         success {
             echo '✅ CI/CD Pipeline executed successfully!'
         }
 
         failure {
-            echo '❌ Pipeline failed! Cleaning up containers...'
-            bat 'docker compose down'
+            echo '❌ Pipeline failed!'
+        }
+
+        always {
+            echo '📦 Pipeline execution finished.'
         }
     }
 }
